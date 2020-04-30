@@ -4,11 +4,50 @@ from datetime import datetime
 
 class WildSpider(scrapy.Spider):
     name = 'wild'
-    start_urls = ['https://www.wildberries.ru/catalog/obuv/zhenskaya/baletki-i-cheshki/polupaltsy']
-    # start_urls = ['https://www.wildberries.ru/catalog/obuv/zhenskaya/botforty']
-    # start_urls = ['https://www.wildberries.ru/catalog/obuv/zhenskaya/sabo-i-myuli/myuli']
+
+    start_urls = ['https://www.wildberries.ru']
+
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/zhenskaya/sabo-i-myuli/myuli'             # 283 280 -3
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/zhenskaya/dutiki-i-snoubutsy/snoubutsy'   # 243 242 -1
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/muzhskaya/botinki/bertsy'                 # 226 210 -16
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/muzhskaya/botinki-dezerty'                # 71  71  0
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/muzhskaya/botinki/s-mehom'                # 453 452 -1
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/muzhskaya/rabochie-botinki'               # 365 364 -1
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/muzhskaya/botinki/chukka'                 # 209 207 -2
+    # start_url_page = 'https://www.wildberries.ru/catalog/elektronika/tehnika-dlya-doma/uvlazhniteli'    # 256 230
+    # start_url_page = 'https://www.wildberries.ru/catalog/bytovaya-tehnika/tehnika-dlya-doma/' \
+    #                  'klimaticheskaya-tehnika/obogrev-pomeshcheniya'                                    # 182 172 -10
+    # start_url_page = 'https://www.wildberries.ru/catalog/elektronika/tehnika-dlya-doma/meshki-dlya-pylesosov' # 303 287 -16
+
+
+    # to test. 9-10 goods
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/zhenskaya/baletki-i-cheshki/polupaltsy'
+
+    # to test video and 360
+    # start_url_page = 'https://www.wildberries.ru/catalog/obuv/zhenskaya/botforty'
+
+    # URL to POST geo (Moscow)
+    url_geo = 'https://www.wildberries.ru/geo/saveprefereduserlocation/77'      # Moscow
+    # url_geo = 'https://www.wildberries.ru/geo/saveprefereduserlocation/34'      # Volgograd
 
     def parse(self, response):
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest'}
+        yield scrapy.Request(url=self.url_geo,
+                             callback=self.parse_geo,
+                             method='POST',
+                             headers=headers,)
+
+    def parse_geo(self, response):
+        yield scrapy.Request(url=self.start_url_page,
+                             callback=self.parse_page)
+
+    def parse_page(self, response):
+
         self.logger.info('===============START PARSE PAGE======================')
         goods = response.css('div.j-card-item')
         for good in goods:
@@ -28,7 +67,7 @@ class WildSpider(scrapy.Spider):
             self.logger.info('================ END PARSE PAGE =====================')
 
         for a in response.css('a.next'):
-            yield response.follow(a, callback=self.parse)
+            yield response.follow(a, callback=self.parse_page)
         # next_page = response.css('a.next::attr(href)').get()
         # if next_page is not None:
         #     next_page = response.urljoin(next_page)
