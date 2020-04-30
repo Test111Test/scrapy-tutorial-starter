@@ -10,6 +10,7 @@ class QuotesSpider(scrapy.Spider):
 
 
     def parse(self, response):
+        self.logger.info('===============START PARSE PAGE======================')
         self.logger.info('Parse function called on {}'.format(response.url))
         # quotes = response.xpath("//div[@class='quote']")
         quotes = response.css('div.quote')
@@ -37,10 +38,11 @@ class QuotesSpider(scrapy.Spider):
             # loader.add_xpath('author', './/small//text()')
             loader.add_css('tags', '.tag::text')
             quote_item = loader.load_item()
+
             author_url = quote.css('.author + a::attr(href)').get()
-            ## self.logger.info('get author page url')
+            # # self.logger.info('get author page url')
             # go to author page and pass  the current collected quote info
-            ## yield response.follow(author_url, callback=self.parse_author)
+            # # yield response.follow(author_url, callback=self.parse_author)
             yield response.follow(author_url, self.parse_author, meta={'quote_item': quote_item})
 
         # Version 2.2   go to Next page
@@ -53,6 +55,7 @@ class QuotesSpider(scrapy.Spider):
         #     yield scrapy.Request(next_page, callback=self.parse)
 
     def parse_author(self, response):
+        self.logger.info('================ START PARSE GOOD =====================')
         # yield {
         #     'author_name': response.css('.author-title::text').get(),
         #     'author_birthday': response.css('.author-born-date::text').get(),
@@ -64,6 +67,6 @@ class QuotesSpider(scrapy.Spider):
         loader.add_css('author_name', '.author-title::text')
         loader.add_css('author_birthday', '.author-born-date::text')
         loader.add_css('author_bornlocation', '.author-born-location::text')
-        loader.add_css('author_bio', '.author-description::text')
+        # loader.add_css('author_bio', '.author-description::text')
         yield loader.load_item()
 
